@@ -8,24 +8,43 @@ document.addEventListener("DOMContentLoaded", async () => {
     showLoading();
     
     try {
-        const url1 = 'https://docs.google.com/spreadsheets/d/12tWeZXJSyrO9j8SzhduSMqH9hC4aBs46cAK9RNNc14E/gviz/tq?tqx=out:csv&sheet=Sheet1';
-        const url2 = 'https://docs.google.com/spreadsheets/d/12tWeZXJSyrO9j8SzhduSMqH9hC4aBs46cAK9RNNc14E/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent('الورقه 2');
-
-        const parseCSV = (url) => {
+        const fetchSheetJSONP = (sheetName) => {
             return new Promise((resolve, reject) => {
-                Papa.parse(url, {
-                    download: true,
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: (results) => resolve(results.data),
-                    error: (error) => reject(error)
-                });
+                const script = document.createElement('script');
+                const callbackName = 'jsonp_' + Math.random().toString(36).substr(2, 9);
+                window[callbackName] = function(data) {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    
+                    if (data.status === 'error') {
+                        return reject(data.errors);
+                    }
+                    
+                    // Map Google Visualization format to flat objects
+                    const cols = data.table.cols.map(c => c.label);
+                    const rows = data.table.rows.map(r => {
+                        const obj = {};
+                        r.c.forEach((cell, i) => {
+                            obj[cols[i]] = cell ? (cell.f ? cell.f : cell.v) : null;
+                            // cell.f is formatted value (sometimes strings), cell.v is raw value
+                            // We prefer cell.v but if it's not there we fallback to cell.f
+                            if(cell && cell.v !== undefined && cell.v !== null) {
+                                obj[cols[i]] = cell.v;
+                            }
+                        });
+                        return obj;
+                    });
+                    resolve(rows);
+                };
+                script.src = `https://docs.google.com/spreadsheets/d/12tWeZXJSyrO9j8SzhduSMqH9hC4aBs46cAK9RNNc14E/gviz/tq?tqx=responseHandler:${callbackName}&sheet=${encodeURIComponent(sheetName)}`;
+                script.onerror = reject;
+                document.body.appendChild(script);
             });
         };
 
         const [raw1, raw2] = await Promise.all([
-            parseCSV(url1),
-            parseCSV(url2)
+            fetchSheetJSONP('Sheet1'),
+            fetchSheetJSONP('الورقه 2')
         ]);
 
         if(!raw1 || raw1.length === 0) throw new Error("لم يتم العثور على بيانات");
@@ -58,10 +77,33 @@ document.addEventListener("DOMContentLoaded", async () => {
             };
         }).filter(d => d['المنفذ'] || d['إسم الوحدة / المركز']);
 
-        // Generate Alerts (mock logic or based on rules)
+        // Generate Alerts (drop > 15% compared to previous month)
         globalAlerts = [];
         const centers = [...new Set(globalData.map(d => d['المنفذ']))];
-        const activeMonths = [...new Set(globalData.map(d => d['الشهر']))];
+        const orderedMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+        
+        centers.forEach(center => {
+            const centerData = globalData.filter(d => d['المنفذ'] === center);
+            // Sort center data chronologically
+            centerData.sort((a, b) => orderedMonths.indexOf(a['الشهر']) - orderedMonths.indexOf(b['الشهر']));
+            
+            for (let i = 1; i < centerData.length; i++) {
+                const prev = centerData[i-1]['إجمالي مستفيدين'];
+                const curr = centerData[i]['إجمالي مستفيدين'];
+                if (prev > 0) {
+                    const drop = ((prev - curr) / prev) * 100;
+                    if (drop >= 15) {
+                        globalAlerts.push({
+                            type: 'warning',
+                            center: center,
+                            month: centerData[i]['الشهر'],
+                            metric: 'إجمالي مستفيدين',
+                            drop: drop.toFixed(1)
+                        });
+                    }
+                }
+            }
+        });
         
         // Simple KPIs based on totals
         globalKPIs = { summary: null, top_centers: [] };
@@ -270,7 +312,7 @@ function showAlerts(alerts) {
 }
 
 function renderAlertsTable() {
-    const anomalies = globalAlerts.filter(a => a.type === 'anomaly');
+    const anomalies = globalAlerts; // All generated alerts are warnings
     
     new Tabulator("#table-alerts", {
         data: anomalies,
@@ -279,7 +321,9 @@ function renderAlertsTable() {
             {title: "المنفذ", field: "center"},
             {title: "الشهر", field: "month"},
             {title: "المؤشر", field: "metric"},
-            {title: "نسبة الانخفاض", field: "drop", formatter: "color", formatterParams: {color: "#e74c3c"}},
+            {title: "نسبة الانخفاض", field: "drop", formatter: function(cell){
+                return "<span style='color:#e74c3c; font-weight:bold'>" + cell.getValue() + "%</span>";
+            }},
         ],
         placeholder: "لا يوجد منافذ منخفضة الأداء",
         textDirection: "rtl"
