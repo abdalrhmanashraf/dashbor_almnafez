@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام الداشبورد التحليلي - التأمين الصحي الشامل</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Tabulator CSS -->
+    <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator_midnight.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+    <div id="alerts-container" class="alerts-container"></div>
+
+    <div class="dashboard-header">
+        <div class="logo-area">
+            <i class="fa-solid fa-shield-heart"></i>
+            <h1>التأمين الصحي الشامل <span>| لوحة القيادة التحليلية</span></h1>
+        </div>
+        <div class="controls-area">
+            <div class="filter-group">
+                <select id="month-filter">
+                    <option value="all">كل الأشهر</option>
+                    <option value="يناير">يناير</option>
+                    <option value="فبراير">فبراير</option>
+                    <option value="مارس">مارس</option>
+                    <option value="أبريل">أبريل</option>
+                    <option value="مايو">مايو</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <select id="region-filter">
+                    <option value="all">كل المناطق</option>
+                    <option value="الأقصر">الأقصر</option>
+                    <option value="ارمنت">ارمنت</option>
+                    <option value="اسنا">اسنا</option>
+                    <option value="القرنة">القرنة</option>
+                    <option value="الفرع الرئيسي">الفرع الرئيسي</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <select id="center-filter" disabled>
+                    <option value="all">كل المنافذ</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-content" id="dashboard-content">
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="spinner"></div>
+            <p>جاري تحميل البيانات...</p>
+        </div>
+
+        <!-- Row 1: KPI Cards -->
+        <div class="row kpi-row">
+            <div class="card kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+                <div class="kpi-details">
+                    <h3>إجمالي المستفيدين</h3>
+                    <div class="kpi-value" id="kpi-beneficiaries">0</div>
+                    <div class="kpi-growth" id="growth-beneficiaries"><span class="arrow"></span> <span class="val">0%</span> (الشهر السابق)</div>
+                </div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-money-bill-trend-up"></i></div>
+                <div class="kpi-details">
+                    <h3>إجمالي التحصيل</h3>
+                    <div class="kpi-value" id="kpi-collections">0</div>
+                    <div class="kpi-growth" id="growth-collections"><span class="arrow"></span> <span class="val">0%</span> (الشهر السابق)</div>
+                </div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-rotate"></i></div>
+                <div class="kpi-details">
+                    <h3>إجمالي التحديثات</h3>
+                    <div class="kpi-value" id="kpi-updates">0</div>
+                    <div class="kpi-growth" id="growth-updates"><span class="arrow"></span> <span class="val">0%</span> (الشهر السابق)</div>
+                </div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-user-plus"></i></div>
+                <div class="kpi-details">
+                    <h3>إجمالي الجدد</h3>
+                    <div class="kpi-value" id="kpi-new">0</div>
+                    <div class="kpi-growth" id="growth-new"><span class="arrow"></span> <span class="val">0%</span> (الشهر السابق)</div>
+                </div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-folder-open"></i></div>
+                <div class="kpi-details">
+                    <h3>إجمالي الملفات الأسرية</h3>
+                    <div class="kpi-value" id="kpi-files">0</div>
+                    <div class="kpi-growth" id="growth-files"><span class="arrow"></span> <span class="val">0%</span> (الشهر السابق)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 2: Main Charts -->
+        <div class="row chart-row">
+            <div class="card chart-card lg">
+                <h3>تطور إجمالي المستفيدين عبر الأشهر (حسب المنطقة)</h3>
+                <div id="chart-line-beneficiaries" class="chart-container"></div>
+            </div>
+            <div class="card chart-card lg">
+                <h3>إجمالي التحصيل لكل منطقة شهرياً</h3>
+                <div id="chart-bar-collections" class="chart-container"></div>
+            </div>
+        </div>
+
+        <!-- Row 3: Advanced Analytics -->
+        <div class="row chart-row">
+            <div class="card chart-card md">
+                <h3>تحليل الأداء (مستفيدين / تحصيل / تحديثات)</h3>
+                <div id="chart-bubble-performance" class="chart-container"></div>
+            </div>
+            <div class="card chart-card md">
+                <h3>مساهمة المنافذ في إجمالي المستفيدين</h3>
+                <div id="chart-treemap-centers" class="chart-container"></div>
+            </div>
+            <div class="card chart-card sm">
+                <h3>مؤشر صحة التأمين (نسبة المؤمن عليه)</h3>
+                <div id="chart-gauge-health" class="chart-container"></div>
+            </div>
+        </div>
+
+        <!-- Row 4: Population Coverage -->
+        <div class="row chart-row">
+            <div class="card chart-card lg">
+                <h3>مقارنة المسجلين وغير المسجلين حسب المنطقة</h3>
+                <div id="chart-stacked-coverage" class="chart-container"></div>
+            </div>
+            <div class="card chart-card lg">
+                <h3>ترتيب المنافذ في نسبة التغطية السكانية</h3>
+                <div id="chart-bar-top-coverage" class="chart-container"></div>
+            </div>
+        </div>
+
+        <!-- Row 5: Categories & Heatmap -->
+        <div class="row chart-row">
+            <div class="card chart-card sm">
+                <h3>توزيع فئات المستفيدين</h3>
+                <div id="chart-donut-categories" class="chart-container"></div>
+            </div>
+            <div class="card chart-card lg">
+                <h3>خريطة الأداء الشهري للمنافذ (Heatmap)</h3>
+                <div id="chart-heatmap-performance" class="chart-container"></div>
+            </div>
+        </div>
+
+        <!-- Row 5: Tables and Alerts -->
+        <div class="row data-row">
+            <div class="card table-card">
+                <h3><i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-red)"></i> منافذ تحتاج إلى اهتمام (انخفاض أداء > 15%)</h3>
+                <div id="table-alerts" class="table-container"></div>
+            </div>
+            <div class="card table-card">
+                <h3><i class="fa-solid fa-star" style="color: var(--accent-orange)"></i> أفضل المنافذ أداءً (مؤشر KPI المركب)</h3>
+                <div id="table-top-centers" class="table-container"></div>
+            </div>
+        </div>
+        
+        <!-- Full Data Table for Export -->
+        <div class="row data-row" style="margin-top: 20px;">
+            <div class="card table-card">
+                <h3>سجل البيانات الكامل</h3>
+                <div id="table-full-data" class="table-container"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-locale-ar-latest.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    
+    <script src="assets/charts.js"></script>
+    <script src="assets/dashboard.js"></script>
+</body>
+</html>
