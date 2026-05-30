@@ -3,17 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الداشبورد التحليلي - التأمين الصحي الشامل</title>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>التأمين الصحي الشامل | لوحة القيادة التحليلية</title>
     
     <!-- Tabulator CSS -->
     <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator_midnight.min.css" rel="stylesheet">
     
-    <!-- Font Awesome -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Custom CSS -->
@@ -21,172 +16,283 @@
 </head>
 <body>
 
-    <div id="alerts-container" class="alerts-container"></div>
-
-    <div class="dashboard-header">
-        <div class="logo-area">
-            <i class="fa-solid fa-shield-heart"></i>
-            <h1>التأمين الصحي الشامل <span>| لوحة القيادة التحليلية</span></h1>
-        </div>
-        <div class="controls-area">
-            <div class="filter-group">
-                <select id="month-filter">
-                    <option value="all">كل الأشهر</option>
-                    <option value="يناير">يناير</option>
-                    <option value="فبراير">فبراير</option>
-                    <option value="مارس">مارس</option>
-                    <option value="أبريل">أبريل</option>
-                    <option value="مايو">مايو</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <select id="region-filter">
-                    <option value="all">كل المناطق</option>
-                    <option value="الأقصر">الأقصر</option>
-                    <option value="ارمنت">ارمنت</option>
-                    <option value="اسنا">اسنا</option>
-                    <option value="القرنة">القرنة</option>
-                    <option value="الفرع الرئيسي">الفرع الرئيسي</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <select id="center-filter" disabled>
-                    <option value="all">كل المنافذ</option>
-                </select>
-            </div>
-        </div>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text">جاري تحميل أحدث البيانات...</div>
     </div>
 
-    <div class="dashboard-content" id="dashboard-content">
-        <!-- Loading Overlay -->
-        <div id="loading-overlay" class="loading-overlay">
-            <div class="spinner"></div>
-            <p>جاري تحميل البيانات...</p>
-        </div>
-
-        <!-- Row 1: KPI Cards -->
-        <div class="row kpi-row">
-            <div class="card kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
-                <div class="kpi-details">
-                    <h3>إجمالي المستفيدين</h3>
-                    <div class="kpi-value" id="kpi-beneficiaries">0</div>
-                    <div class="kpi-growth" id="growth-beneficiaries"><span class="arrow"></span> <span class="val">0%</span> (الشهر السابق)</div>
-                </div>
-            </div>
-            <div class="card kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-money-bill-trend-up"></i></div>
-                <div class="kpi-details">
-                    <h3>إجمالي التحصيل</h3>
-                    <div class="kpi-value" id="kpi-collections">0</div>
-                    <div class="kpi-growth" id="growth-collections"><span class="arrow"></span> <span class="val">0%</span> (الشهر السابق)</div>
-                </div>
-            </div>
-            <div class="card kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-rotate"></i></div>
-                <div class="kpi-details">
-                    <h3>إجمالي التحديثات</h3>
-                    <div class="kpi-value" id="kpi-updates">0</div>
-                    <div class="kpi-growth" id="growth-updates"><span class="arrow"></span> <span class="val">0%</span> (الشهر السابق)</div>
-                </div>
-            </div>
-            <div class="card kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-user-plus"></i></div>
-                <div class="kpi-details">
-                    <h3>إجمالي الجدد</h3>
-                    <div class="kpi-value" id="kpi-new">0</div>
-                    <div class="kpi-growth" id="growth-new"><span class="arrow"></span> <span class="val">0%</span> (الشهر السابق)</div>
-                </div>
-            </div>
-            <div class="card kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-folder-open"></i></div>
-                <div class="kpi-details">
-                    <h3>إجمالي الملفات الأسرية</h3>
-                    <div class="kpi-value" id="kpi-files">0</div>
-                    <div class="kpi-growth" id="growth-files"><span class="arrow"></span> <span class="val">0%</span> (الشهر السابق)</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Row 2: Main Charts -->
-        <div class="row chart-row">
-            <div class="card chart-card lg">
-                <h3>تطور إجمالي المستفيدين عبر الأشهر (حسب المنطقة)</h3>
-                <div id="chart-line-beneficiaries" class="chart-container"></div>
-            </div>
-            <div class="card chart-card lg">
-                <h3>إجمالي التحصيل لكل منطقة شهرياً</h3>
-                <div id="chart-bar-collections" class="chart-container"></div>
-            </div>
-        </div>
-
-        <!-- Row 3: Top Centers Bar Charts -->
-        <div class="row chart-row">
-            <div class="card chart-card lg">
-                <h3>أعلى 10 منافذ في إجمالي المستفيدين</h3>
-                <div id="chart-bar-top-beneficiaries" class="chart-container"></div>
-            </div>
-            <div class="card chart-card lg">
-                <h3>أعلى 5 منافذ في إجمالي التحصيل</h3>
-                <div id="chart-bar-top-collections" class="chart-container"></div>
-            </div>
-        </div>
-
-        <!-- Row 4: Population Coverage & Health -->
-        <div class="row chart-row">
-            <div class="card chart-card lg">
-                <h3>مقارنة المسجلين وغير المسجلين حسب المنطقة</h3>
-                <div id="chart-stacked-coverage" class="chart-container"></div>
-            </div>
-            <div class="card chart-card md">
-                <h3>ترتيب المنافذ في نسبة التغطية السكانية (أعلى 20)</h3>
-                <div id="chart-bar-top-coverage" class="chart-container"></div>
-            </div>
-            <div class="card chart-card sm">
-                <h3>مؤشر صحة التأمين (نسبة المؤمن عليه)</h3>
-                <div id="chart-gauge-health" class="chart-container"></div>
-            </div>
-        </div>
-
-        <!-- Row 5: Categories & Heatmap -->
-        <div class="row chart-row">
-            <div class="card chart-card sm">
-                <h3>توزيع فئات المستفيدين</h3>
-                <div id="chart-donut-categories" class="chart-container"></div>
-            </div>
-            <div class="card chart-card lg">
-                <h3>خريطة الأداء الشهري للمنافذ (Heatmap)</h3>
-                <div id="chart-heatmap-performance" class="chart-container"></div>
-            </div>
-        </div>
-
-        <!-- Row 5: Tables and Alerts -->
-        <div class="row data-row">
-            <div class="card table-card">
-                <h3><i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-red)"></i> منافذ تحتاج إلى اهتمام (انخفاض أداء > 15%)</h3>
-                <div id="table-alerts" class="table-container"></div>
-            </div>
-            <div class="card table-card">
-                <h3><i class="fa-solid fa-star" style="color: var(--accent-orange)"></i> أفضل المنافذ أداءً (مؤشر KPI المركب)</h3>
-                <div id="table-top-centers" class="table-container"></div>
-            </div>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <i class="fa-solid fa-chart-line" style="color: var(--accent-blue)"></i>
+            التأمين الصحي الشامل | لوحة القيادة التحليلية
         </div>
         
-        <!-- Full Data Table for Export -->
-        <div class="row data-row" style="margin-top: 20px;">
+        <div class="filter-group">
+            <div id="sync-status" style="font-size: 0.8rem; color: var(--accent-green); margin-left: 15px;">
+                <i class="fa-solid fa-circle-check"></i> متصل
+            </div>
+            <select id="month-filter">
+                <option value="all">كل الأشهر</option>
+            </select>
+            <select id="region-filter">
+                <option value="all">كل المناطق</option>
+            </select>
+            <select id="center-filter" disabled>
+                <option value="all">كل المنافذ</option>
+            </select>
+        </div>
+    </nav>
+
+    <!-- Main Dashboard Area -->
+    <div class="dashboard">
+
+        <!-- Row 1: KPI Grid (8 Cards) -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+                <div class="kpi-label">إجمالي التحصيل</div>
+                <div class="kpi-value" id="kpi-collection">0</div>
+                <div class="kpi-change" id="kpi-collection-change">-</div>
+            </div>
+            
+            <div class="kpi-card">
+                <div class="kpi-icon" style="color: var(--accent-green); background: rgba(16,185,129,0.1)"><i class="fa-solid fa-users"></i></div>
+                <div class="kpi-label">إجمالي المستفيدين</div>
+                <div class="kpi-value" id="kpi-beneficiaries">0</div>
+                <div class="kpi-change" id="kpi-beneficiaries-change">-</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon" style="color: var(--accent-purple); background: rgba(139,92,246,0.1)"><i class="fa-solid fa-id-card"></i></div>
+                <div class="kpi-label">البطاقات المصدرة</div>
+                <div class="kpi-value" id="kpi-cards">0</div>
+                <div class="kpi-change" id="kpi-cards-change">-</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon" style="color: var(--accent-orange); background: rgba(245,158,11,0.1)"><i class="fa-solid fa-folder-open"></i></div>
+                <div class="kpi-label">الملفات الأسرية</div>
+                <div class="kpi-value" id="kpi-families">0</div>
+                <div class="kpi-change">-</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon" style="color: var(--accent-cyan); background: rgba(6,182,212,0.1)"><i class="fa-solid fa-rotate"></i></div>
+                <div class="kpi-label">التحديثات</div>
+                <div class="kpi-value" id="kpi-updates">0</div>
+                <div class="kpi-change">-</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon" style="color: var(--accent-red); background: rgba(239,68,68,0.1)"><i class="fa-solid fa-percent"></i></div>
+                <div class="kpi-label">نسبة التحويل (بطاقات/مترددين)</div>
+                <div class="kpi-value" id="kpi-conversion">0%</div>
+                <div class="kpi-change" id="kpi-conversion-change">-</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon" style="color: #6366f1; background: rgba(99,102,241,0.1)"><i class="fa-solid fa-door-open"></i></div>
+                <div class="kpi-label">المترددون</div>
+                <div class="kpi-value" id="kpi-visitors">0</div>
+                <div class="kpi-change">-</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon" style="color: #14b8a6; background: rgba(20,184,166,0.1)"><i class="fa-solid fa-money-bill-wave"></i></div>
+                <div class="kpi-label">متوسط تحصيل / مستفيد</div>
+                <div class="kpi-value" id="kpi-avg-collection">0 ج.م</div>
+                <div class="kpi-change">-</div>
+            </div>
+        </div>
+
+        <!-- Row 2: Monthly Trends -->
+        <div class="chart-row col-2">
+            <div class="card">
+                <div class="card-header"><i class="fa-solid fa-chart-line"></i> تطور إجمالي المستفيدين عبر الأشهر</div>
+                <div class="card-body">
+                    <div id="chart-line-beneficiaries" class="chart-container"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><i class="fa-solid fa-chart-column"></i> إجمالي التحصيل لكل منطقة شهرياً</div>
+                <div class="card-body">
+                    <div id="chart-bar-collections" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 3: Top Centers -->
+        <div class="chart-row col-2">
+            <div class="card">
+                <div class="card-header"><i class="fa-solid fa-trophy" style="color: var(--accent-orange)"></i> أعلى 10 منافذ في إجمالي المستفيدين</div>
+                <div class="card-body">
+                    <div id="chart-top-beneficiaries" class="chart-container"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><i class="fa-solid fa-crown" style="color: var(--accent-green)"></i> أعلى 5 منافذ في التحصيل</div>
+                <div class="card-body">
+                    <div id="chart-top-collections" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 4: Advanced Analytics (From PDF) -->
+        <div class="chart-row col-3">
+            <div class="card">
+                <div class="card-header"><i class="fa-solid fa-folder-plus"></i> أعلى المناطق في فتح ملفات جديدة</div>
+                <div class="card-body">
+                    <div id="chart-donut-new-files" class="chart-container"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><i class="fa-solid fa-money-check-dollar"></i> مؤشر تقدم السداد التراكمي</div>
+                <div class="card-body">
+                    <div id="chart-area-payment" class="chart-container"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><i class="fa-solid fa-chart-pie"></i> توزيع فئات المستفيدين</div>
+                <div class="card-body">
+                    <div id="chart-donut-categories" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 5: Coverage & Health -->
+        <div class="chart-row col-2">
+            <div class="card">
+                <div class="card-header"><i class="fa-solid fa-layer-group"></i> المسجلين وغير المسجلين حسب المنطقة</div>
+                <div class="card-body">
+                    <div id="chart-stacked-coverage" class="chart-container"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><i class="fa-solid fa-heart-pulse" style="color: var(--accent-red)"></i> مؤشر صحة التأمين (نسبة المؤمن عليه)</div>
+                <div class="card-body">
+                    <div id="chart-gauge-health" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 6: Heatmap -->
+        <div class="chart-row col-full">
+            <div class="card">
+                <div class="card-header"><i class="fa-solid fa-map"></i> خريطة الأداء الشهري للمنافذ</div>
+                <div class="card-body">
+                    <div id="chart-heatmap" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 7: Absence Analysis (Special Section) -->
+        <div class="absence-section">
+            <div class="section-title">
+                <i class="fa-solid fa-user-clock"></i> تحليل الغياب
+            </div>
+            
+            <div class="absence-kpi-grid">
+                <div class="absence-kpi">
+                    <div class="kpi-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
+                    <div class="kpi-label">إجمالي أيام الغياب</div>
+                    <div class="kpi-value" id="kpi-total-absence">0</div>
+                </div>
+                <div class="absence-kpi">
+                    <div class="kpi-icon" style="color: var(--accent-green); background: rgba(16,185,129,0.1)"><i class="fa-solid fa-user-check"></i></div>
+                    <div class="kpi-label">أيام الغياب المغطاة ببديل</div>
+                    <div class="kpi-value" id="kpi-covered-absence">0</div>
+                </div>
+                <div class="absence-kpi">
+                    <div class="kpi-icon" style="color: var(--accent-cyan); background: rgba(6,182,212,0.1)"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div class="kpi-label">نسبة التغطية</div>
+                    <div class="kpi-value" id="kpi-coverage-pct">0%</div>
+                </div>
+            </div>
+
+            <div class="chart-row col-2">
+                <div class="card">
+                    <div class="card-header"><i class="fa-solid fa-hospital-user"></i> أعلى المنافذ غياباً</div>
+                    <div class="card-body">
+                        <div id="chart-top-absence" class="chart-container"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fa-solid fa-chart-pie"></i> توزيع الغياب حسب النوع</div>
+                    <div class="card-body">
+                        <div id="chart-absence-types" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-row col-2" style="margin-top: 20px;">
+                <div class="card">
+                    <div class="card-header"><i class="fa-solid fa-map-location-dot"></i> توزيع الغياب حسب المركز</div>
+                    <div class="card-body">
+                        <div id="chart-absence-by-center" class="chart-container"></div>
+                    </div>
+                </div>
+                <div class="card table-card">
+                    <div class="card-header"><i class="fa-solid fa-user-injured"></i> أعلى الموظفين في الغياب</div>
+                    <div class="card-body">
+                        <div id="table-top-absent-employees" class="table-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-row col-full" style="margin-top: 20px;">
+                <div class="card table-card">
+                    <div class="card-header"><i class="fa-solid fa-list-check"></i> سجل الغياب التفصيلي</div>
+                    <div class="card-body">
+                        <div id="table-absence-detail" class="table-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 8: Performance Tables -->
+        <div class="chart-row col-2" style="margin-top: 24px;">
             <div class="card table-card">
-                <h3>سجل البيانات الكامل</h3>
-                <div id="table-full-data" class="table-container"></div>
+                <div class="card-header"><i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-red)"></i> منافذ تحتاج إلى اهتمام (انخفاض أداء > 15%)</div>
+                <div class="card-body">
+                    <div id="table-alerts" class="table-container"></div>
+                </div>
+            </div>
+            <div class="card table-card">
+                <div class="card-header"><i class="fa-solid fa-star" style="color: var(--accent-orange)"></i> أفضل المنافذ أداءً (مؤشر KPI المركب)</div>
+                <div class="card-body">
+                    <div id="table-top-centers" class="table-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 9: Full Data Table -->
+        <div class="chart-row col-full" style="margin-top: 20px;">
+            <div class="card table-card">
+                <div class="card-header"><i class="fa-solid fa-database"></i> سجل البيانات الكامل (الإحصائيات التشغيلية)</div>
+                <div class="card-body">
+                    <div id="table-full-data" class="table-container"></div>
+                </div>
             </div>
         </div>
 
     </div>
 
+    <footer>
+        تم التطوير بواسطة فريق التأمين الصحي الشامل — فرع الأقصر
+    </footer>
+
     <!-- Scripts -->
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <script src="https://cdn.plot.ly/plotly-locale-ar-latest.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
     
+    <!-- Firebase Compat SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Dashboard Scripts -->
+    <script src="assets/firebase-config.js"></script>
     <script src="assets/charts.js"></script>
     <script src="assets/dashboard.js"></script>
 </body>
