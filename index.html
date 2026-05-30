@@ -19,8 +19,29 @@
     <!-- Loading Overlay -->
     <div id="loading-overlay">
         <div class="spinner"></div>
-        <div class="loading-text">جاري تحميل أحدث البيانات...</div>
+        <div class="loading-text" id="loading-msg">جاري تحميل أحدث البيانات...</div>
+        <div id="error-box" style="color: #ffcccc; margin-top: 20px; font-family: monospace; white-space: pre-wrap; text-align: left; direction: ltr; padding: 10px; background: rgba(255,0,0,0.2); display: none;"></div>
     </div>
+    
+    <script>
+        // Global error catcher to display errors on screen
+        window.addEventListener('error', function(event) {
+            const eb = document.getElementById('error-box');
+            if (eb) {
+                eb.style.display = 'block';
+                eb.innerHTML += 'Error: ' + event.message + ' at ' + event.filename + ':' + event.lineno + '\n';
+                document.getElementById('loading-msg').innerText = 'توقف التحميل بسبب خطأ!';
+            }
+        });
+        window.addEventListener('unhandledrejection', function(event) {
+            const eb = document.getElementById('error-box');
+            if (eb) {
+                eb.style.display = 'block';
+                eb.innerHTML += 'Promise Error: ' + (event.reason && event.reason.stack ? event.reason.stack : event.reason) + '\n';
+                document.getElementById('loading-msg').innerText = 'توقف التحميل بسبب خطأ!';
+            }
+        });
+    </script>
 
     <!-- Navbar -->
     <nav class="navbar">
@@ -284,7 +305,8 @@
     </footer>
 
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-locale-ar-latest.js"></script>
     <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
     
     <!-- Firebase Compat SDK -->
