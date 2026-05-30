@@ -2801,7 +2801,7 @@
     "إجمالي رسوم": 620.0,
     "إجمالي سداد": 19017.0,
     "Column 29": 0.0,
-    "pct_change_beneficiaries": Infinity,
+    "pct_change_beneficiaries": 0.0,
     "kpi_score": 34.45
   },
   {
@@ -2900,7 +2900,7 @@
     "إجمالي رسوم": 290.0,
     "إجمالي سداد": 10607.0,
     "Column 29": 0.0,
-    "pct_change_beneficiaries": Infinity,
+    "pct_change_beneficiaries": 0.0,
     "kpi_score": 20.06
   },
   {
@@ -3131,7 +3131,7 @@
     "إجمالي رسوم": 625.0,
     "إجمالي سداد": 161045.0,
     "Column 29": 0.0,
-    "pct_change_beneficiaries": Infinity,
+    "pct_change_beneficiaries": 0.0,
     "kpi_score": 33.51
   },
   {
@@ -3230,7 +3230,7 @@
     "إجمالي رسوم": 1385.0,
     "إجمالي سداد": 108615.0,
     "Column 29": 0.0,
-    "pct_change_beneficiaries": Infinity,
+    "pct_change_beneficiaries": 0.0,
     "kpi_score": 49.34
   },
   {
@@ -3395,7 +3395,7 @@
     "إجمالي رسوم": 650.0,
     "إجمالي سداد": 5750.0,
     "Column 29": 0.0,
-    "pct_change_beneficiaries": Infinity,
+    "pct_change_beneficiaries": 0.0,
     "kpi_score": 11.96
   },
   {
@@ -6332,7 +6332,7 @@
     "إجمالي رسوم": 0.0,
     "إجمالي سداد": 0.0,
     "Column 29": 0.0,
-    "pct_change_beneficiaries": Infinity,
+    "pct_change_beneficiaries": 0.0,
     "kpi_score": 6.77
   },
   {
@@ -6926,7 +6926,7 @@
     "إجمالي رسوم": 470.0,
     "إجمالي سداد": 41398.0,
     "Column 29": 0.0,
-    "pct_change_beneficiaries": Infinity,
+    "pct_change_beneficiaries": 0.0,
     "kpi_score": 44.58
   },
   {
@@ -7487,7 +7487,7 @@
     "إجمالي رسوم": 0.0,
     "إجمالي سداد": 0.0,
     "Column 29": 0.0,
-    "pct_change_beneficiaries": Infinity,
+    "pct_change_beneficiaries": 0.0,
     "kpi_score": 7.43
   },
   {

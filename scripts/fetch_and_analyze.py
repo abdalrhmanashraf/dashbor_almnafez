@@ -188,6 +188,22 @@ def analyze_data(data):
     latest_month_num = df['Month_Num'].max()
     latest_data = df[df['Month_Num'] == latest_month_num]
     previous_data = df[df['Month_Num'] == latest_month_num - 1] if latest_month_num > 1 else pd.DataFrame()
+    growth_rate = df['pct_change_beneficiaries'].mean()
+
+    kpis = {
+        'total_beneficiaries': int(df['إجمالي مستفيدين'].sum()),
+        'total_collections': float(df['إجمالي تحصيل'].sum()),
+        'total_updates': int(df['تحديث'].sum()),
+        'total_new_files': int(df['ملف اسري'].sum()),
+        'growth_rate': float(growth_rate),
+        'total_card_issues': int(df['إصدار بطاقات'].sum())
+    }
+    
+    import numpy as np
+    import math
+    for k, v in kpis.items():
+        if pd.isna(v) or np.isinf(v) or math.isnan(v):
+            kpis[k] = 0
 
     total_beneficiaries = float(latest_data['إجمالي مستفيدين'].sum())
     total_collections = float(latest_data['إجمالي تحصيل'].sum())
@@ -226,6 +242,9 @@ def analyze_data(data):
 
     # Drop temporary columns for final JSON output
     df = df.drop(columns=['Month_Num', 'norm_beneficiaries', 'norm_collections', 'norm_updates'])
+    
+    import numpy as np
+    df = df.replace([np.inf, -np.inf, np.nan], 0)
 
     return df.to_dict('records'), kpis, alerts
 

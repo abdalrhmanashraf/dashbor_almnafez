@@ -8,25 +8,81 @@ document.addEventListener("DOMContentLoaded", async () => {
     showLoading();
     
     try {
-        // Fetch data
-        const [dataRes, kpisRes, alertsRes, popRes] = await Promise.all([
-            fetch('data/data.json'),
-            fetch('data/kpis.json'),
-            fetch('data/alerts.json'),
-            fetch('data/population.json')
+        const url1 = 'https://docs.google.com/spreadsheets/d/12tWeZXJSyrO9j8SzhduSMqH9hC4aBs46cAK9RNNc14E/gviz/tq?tqx=out:csv&sheet=Sheet1';
+        const url2 = 'https://docs.google.com/spreadsheets/d/12tWeZXJSyrO9j8SzhduSMqH9hC4aBs46cAK9RNNc14E/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent('الورقه 2');
+
+        const parseCSV = (url) => {
+            return new Promise((resolve, reject) => {
+                Papa.parse(url, {
+                    download: true,
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: (results) => resolve(results.data),
+                    error: (error) => reject(error)
+                });
+            });
+        };
+
+        const [raw1, raw2] = await Promise.all([
+            parseCSV(url1),
+            parseCSV(url2)
         ]);
 
-        if(!dataRes.ok) throw new Error("Data file not found. Have you run the python script?");
+        if(!raw1 || raw1.length === 0) throw new Error("لم يتم العثور على بيانات");
 
-        globalData = await dataRes.json();
-        globalKPIs = await kpisRes.json();
-        globalAlerts = await alertsRes.json();
+        // Clean and map data 1
+        globalData = raw1.map(d => {
+            return {
+                ...d,
+                'إجمالي مستفيدين': parseFloat(d['اجمالي مستفيدين'] || d['إجمالي مستفيدين']) || 0,
+                'إجمالي تحصيل': parseFloat(d['اجمالي التحصيل'] || d['إجمالي تحصيل']) || 0,
+                'مؤمن عليه': parseFloat(d['مؤمن عليه']) || 0,
+                'غير مؤمن عليه': parseFloat(d['غير مؤمن عليه']) || 0,
+                'موظف حكومي': parseFloat(d['موظف حكومي']) || 0,
+                'بالمعاش': parseFloat(d['بالمعاش']) || 0,
+                'تكافل وكرامة': parseFloat(d['تكافل وكرامه'] || d['تكافل وكرامة']) || 0,
+                'تحديث': parseFloat(d['تحديث']) || 0,
+                'جديد': parseFloat(d['جديد']) || 0,
+                'ملف اسري': parseFloat(d['ملف اسري']) || 0,
+                'الشهر': (d['الشهر'] || '').trim().replace('ابريل', 'أبريل')
+            };
+        }).filter(d => d['الشهر'] && d['المنفذ']);
+
+        // Clean and map pop data
+        globalPopulationData = raw2.map(d => {
+            return {
+                ...d,
+                'عدد المسجلين': parseFloat(d['عدد المسجلين']) || 0,
+                'عدد الغير مسجلين': parseFloat(d['عدد الغير مسجلين'] || d['عدد غير المسجلين']) || 0,
+                'نسبة التغطية': parseFloat(d['نسبة التغطية']) || 0
+            };
+        }).filter(d => d['المنفذ'] || d['إسم الوحدة / المركز']);
+
+        // Generate Alerts (mock logic or based on rules)
+        globalAlerts = [];
+        const centers = [...new Set(globalData.map(d => d['المنفذ']))];
+        const activeMonths = [...new Set(globalData.map(d => d['الشهر']))];
         
-        try {
-            globalPopulationData = await popRes.json();
-        } catch(e) {
-            console.warn("Population data not found yet.");
-        }
+        // Simple KPIs based on totals
+        globalKPIs = { summary: null, top_centers: [] };
+        let centerKPIs = {};
+        
+        globalData.forEach(d => {
+            const center = d['المنفذ'];
+            if(!centerKPIs[center]) {
+                centerKPIs[center] = { 'المنفذ': center, kpi_score: 0, 'إجمالي مستفيدين': 0, 'إجمالي تحصيل': 0 };
+            }
+            centerKPIs[center]['إجمالي مستفيدين'] += d['إجمالي مستفيدين'];
+            centerKPIs[center]['إجمالي تحصيل'] += d['إجمالي تحصيل'];
+            centerKPIs[center].kpi_score += (d['إجمالي مستفيدين'] * 0.4 + d['إجمالي تحصيل'] * 0.6);
+        });
+        
+        // Normalize KPI score to 0-100 roughly
+        const maxScore = Math.max(...Object.values(centerKPIs).map(c => c.kpi_score));
+        globalKPIs.top_centers = Object.values(centerKPIs).map(c => {
+            c.kpi_score = maxScore ? Math.round((c.kpi_score / maxScore) * 100) : 0;
+            return c;
+        }).sort((a,b) => b.kpi_score - a.kpi_score).slice(0, 10);
 
         // Setup Filters
         setupFilters();
@@ -38,7 +94,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         hideLoading();
     } catch (error) {
         console.error("Error loading data:", error);
-        showAlert([{ type: 'anomaly', message: 'خطأ في تحميل البيانات. يرجى التأكد من تشغيل سكريبت بايثون أولاً.' }]);
+        showAlerts([{ type: 'anomaly', message: 'خطأ في تحميل البيانات من جوجل شيت. تأكد من أن الرابط متاح للعامة.' }]);
         hideLoading();
     }
 });
@@ -57,7 +113,14 @@ function setupFilters() {
     const centerFilter = document.getElementById('center-filter');
 
     // Populate months and regions if not hardcoded
-    const months = [...new Set(globalData.map(d => d['الشهر']))];
+    // Order months chronologically
+    const orderedMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+    const months = [...new Set(globalData.map(d => d['الشهر']))].sort((a, b) => {
+        const iA = orderedMonths.indexOf(a);
+        const iB = orderedMonths.indexOf(b);
+        return (iA === -1 ? 99 : iA) - (iB === -1 ? 99 : iB);
+    });
+    
     const regions = [...new Set(globalData.map(d => d['المنطقة']))];
 
     // Helper to clear and populate
@@ -122,11 +185,15 @@ function updateDashboard(data, popData = globalPopulationData) {
 
     updateKPIs(data);
     
-    // Render Charts
+    // Main Charts
     renderLineChart(data, 'chart-line-beneficiaries');
     renderBarChart(data, 'chart-bar-collections');
-    renderBubbleChart(data, 'chart-bubble-performance');
-    renderTreemap(data, 'chart-treemap-centers');
+
+    // Top Centers
+    renderTopBeneficiariesChart(data, 'chart-bar-top-beneficiaries');
+    renderTopCollectionsChart(data, 'chart-bar-top-collections');
+
+    // Other Charts
     renderGaugeChart(data, 'chart-gauge-health');
     renderDonutChart(data, 'chart-donut-categories');
     renderHeatmap(data, 'chart-heatmap-performance');

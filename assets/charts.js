@@ -24,10 +24,12 @@ const colors = {
 function renderLineChart(data, elementId) {
     // Group by Region and Month
     const regions = [...new Set(data.map(d => d['المنطقة']))];
-    const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-    
-    // Sort months logically based on the data
-    const activeMonths = [...new Set(data.map(d => d['الشهر']))].sort((a, b) => months.indexOf(a) - months.indexOf(b));
+    const orderedMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+    const activeMonths = [...new Set(data.map(d => d['الشهر']))].sort((a, b) => {
+        const iA = orderedMonths.indexOf(a);
+        const iB = orderedMonths.indexOf(b);
+        return (iA === -1 ? 99 : iA) - (iB === -1 ? 99 : iB);
+    });
 
     const traces = regions.map((region, i) => {
         const regionData = data.filter(d => d['المنطقة'] === region);
@@ -58,8 +60,12 @@ function renderLineChart(data, elementId) {
 
 function renderBarChart(data, elementId) {
     const regions = [...new Set(data.map(d => d['المنطقة']))];
-    const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-    const activeMonths = [...new Set(data.map(d => d['الشهر']))].sort((a, b) => months.indexOf(a) - months.indexOf(b));
+    const orderedMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+    const activeMonths = [...new Set(data.map(d => d['الشهر']))].sort((a, b) => {
+        const iA = orderedMonths.indexOf(a);
+        const iB = orderedMonths.indexOf(b);
+        return (iA === -1 ? 99 : iA) - (iB === -1 ? 99 : iB);
+    });
 
     const traces = regions.map((region, i) => {
         const regionData = data.filter(d => d['المنطقة'] === region);
@@ -85,86 +91,58 @@ function renderBarChart(data, elementId) {
     Plotly.newPlot(elementId, traces, layout, {responsive: true, displayModeBar: false});
 }
 
-function renderBubbleChart(data, elementId) {
-    const centers = [...new Set(data.map(d => d['المنفذ']))];
-    
+function renderTopBeneficiariesChart(data, elementId) {
     const latestMonth = data.reduce((latest, current) => {
         const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
         return months.indexOf(current['الشهر']) > months.indexOf(latest) ? current['الشهر'] : latest;
     }, 'يناير');
 
     const latestData = data.filter(d => d['الشهر'] === latestMonth);
+    const sortedData = [...latestData].sort((a, b) => (parseFloat(b['إجمالي مستفيدين']) || 0) - (parseFloat(a['إجمالي مستفيدين']) || 0));
+    const topData = sortedData.slice(0, 10);
 
     const trace = {
-        x: latestData.map(d => parseFloat(d['إجمالي مستفيدين']) || 0),
-        y: latestData.map(d => parseFloat(d['إجمالي تحصيل']) || 0),
-        text: latestData.map(d => d['المنفذ']),
-        mode: 'markers',
-        marker: {
-            size: latestData.map(d => (parseFloat(d['تحديث']) || 0) / 10), // Scale down size
-            sizemode: 'area',
-            color: latestData.map((d, i) => i),
-            colorscale: 'Viridis',
-            showscale: false
-        }
+        y: topData.map(d => d['المنفذ']).reverse(),
+        x: topData.map(d => parseFloat(d['إجمالي مستفيدين']) || 0).reverse(),
+        type: 'bar',
+        orientation: 'h',
+        marker: { color: colors.blue }
     };
 
     const layout = {
         ...darkLayout,
-        xaxis: { ...darkLayout.xaxis, title: 'إجمالي المستفيدين' },
-        yaxis: { ...darkLayout.yaxis, title: 'إجمالي التحصيل' },
-        hovermode: 'closest'
+        margin: { t: 20, r: 20, l: 150, b: 40 },
+        yaxis: { ...darkLayout.yaxis, automargin: true }
     };
 
     Plotly.newPlot(elementId, [trace], layout, {responsive: true, displayModeBar: false});
 }
 
-function renderTreemap(data, elementId) {
-    // Only use the latest month for the treemap
+function renderTopCollectionsChart(data, elementId) {
     const latestMonth = data.reduce((latest, current) => {
         const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
         return months.indexOf(current['الشهر']) > months.indexOf(latest) ? current['الشهر'] : latest;
     }, 'يناير');
 
     const latestData = data.filter(d => d['الشهر'] === latestMonth);
-
-    const labels = [];
-    const parents = [];
-    const values = [];
-
-    labels.push('المجموع');
-    parents.push('');
-    values.push(latestData.reduce((sum, d) => sum + (parseFloat(d['إجمالي مستفيدين']) || 0), 0));
-
-    const regions = [...new Set(latestData.map(d => d['المنطقة']))];
-    regions.forEach(region => {
-        labels.push(region);
-        parents.push('المجموع');
-        const regionSum = latestData.filter(d => d['المنطقة'] === region).reduce((sum, d) => sum + (parseFloat(d['إجمالي مستفيدين']) || 0), 0);
-        values.push(regionSum);
-        
-        latestData.filter(d => d['المنطقة'] === region).forEach(d => {
-            labels.push(d['المنفذ']);
-            parents.push(region);
-            values.push(parseFloat(d['إجمالي مستفيدين']) || 0);
-        });
-    });
+    const sortedData = [...latestData].sort((a, b) => (parseFloat(b['إجمالي تحصيل']) || 0) - (parseFloat(a['إجمالي تحصيل']) || 0));
+    const topData = sortedData.slice(0, 5);
 
     const trace = {
-        type: 'treemap',
-        labels: labels,
-        parents: parents,
-        values: values,
-        textinfo: 'label+value+percent parent',
-        marker: { colorscale: 'Blues' }
+        y: topData.map(d => d['المنفذ']).reverse(),
+        x: topData.map(d => parseFloat(d['إجمالي تحصيل']) || 0).reverse(),
+        type: 'bar',
+        orientation: 'h',
+        marker: { color: colors.green }
     };
 
     const layout = {
         ...darkLayout,
-        margin: { t: 0, r: 0, l: 0, b: 0 }
+        margin: { t: 20, r: 20, l: 150, b: 40 },
+        yaxis: { ...darkLayout.yaxis, automargin: true }
     };
 
-    Plotly.newPlot(elementId, [trace], layout, {responsive: true});
+    Plotly.newPlot(elementId, [trace], layout, {responsive: true, displayModeBar: false});
 }
 
 function renderGaugeChart(data, elementId) {
@@ -236,14 +214,25 @@ function renderDonutChart(data, elementId) {
 }
 
 function renderHeatmap(data, elementId) {
-    const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-    const activeMonths = [...new Set(data.map(d => d['الشهر']))].sort((a, b) => months.indexOf(a) - months.indexOf(b));
-    const centers = [...new Set(data.map(d => d['المنفذ']))];
+    const orderedMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+    const activeMonths = [...new Set(data.map(d => d['الشهر']))].sort((a, b) => {
+        const iA = orderedMonths.indexOf(a);
+        const iB = orderedMonths.indexOf(b);
+        return (iA === -1 ? 99 : iA) - (iB === -1 ? 99 : iB);
+    });
+    
+    // Sort centers by total beneficiaries to pick top 20
+    const centersMap = {};
+    data.forEach(d => {
+        if(!centersMap[d['المنفذ']]) centersMap[d['المنفذ']] = 0;
+        centersMap[d['المنفذ']] += (parseFloat(d['إجمالي مستفيدين']) || 0);
+    });
+    const sortedCenters = Object.keys(centersMap).sort((a, b) => centersMap[b] - centersMap[a]);
+    const topCenters = sortedCenters.slice(0, 20).reverse(); // top 20, reversed for y-axis
 
-    const zValues = centers.map(center => {
+    const zValues = topCenters.map(center => {
         return activeMonths.map(month => {
             const d = data.find(item => item['المنفذ'] === center && item['الشهر'] === month);
-            // Example metric: performance can be based on beneficiaries
             return d ? (parseFloat(d['إجمالي مستفيدين']) || 0) : 0; 
         });
     });
@@ -251,14 +240,15 @@ function renderHeatmap(data, elementId) {
     const trace = {
         z: zValues,
         x: activeMonths,
-        y: centers,
+        y: topCenters,
         type: 'heatmap',
         colorscale: 'Blues'
     };
 
     const layout = {
         ...darkLayout,
-        margin: { t: 20, r: 20, l: 150, b: 40 }
+        margin: { t: 20, r: 20, l: 150, b: 40 },
+        yaxis: { ...darkLayout.yaxis, automargin: true }
     };
 
     Plotly.newPlot(elementId, [trace], layout, {responsive: true});
@@ -302,7 +292,7 @@ function renderStackedCoverageChart(popData, elementId) {
 
 function renderTopCoverageChart(popData, elementId) {
     const sortedData = [...popData].sort((a, b) => b['نسبة التغطية'] - a['نسبة التغطية']);
-    const topData = sortedData.slice(0, 15);
+    const topData = sortedData.slice(0, 20); // Get top 20
     
     const trace = {
         y: topData.map(d => d['إسم الوحدة / المركز']).reverse(),
@@ -320,7 +310,8 @@ function renderTopCoverageChart(popData, elementId) {
     const layout = {
         ...darkLayout,
         margin: { t: 20, r: 20, l: 150, b: 40 },
-        xaxis: { ...darkLayout.xaxis, title: 'نسبة التغطية (%)', range: [0, 100] }
+        xaxis: { ...darkLayout.xaxis, title: 'نسبة التغطية (%)', range: [0, 100] },
+        yaxis: { ...darkLayout.yaxis, automargin: true }
     };
 
     Plotly.newPlot(elementId, [trace], layout, {responsive: true, displayModeBar: false});

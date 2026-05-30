@@ -120,31 +120,31 @@
             </div>
         </div>
 
-        <!-- Row 3: Advanced Analytics -->
+        <!-- Row 3: Top Centers Bar Charts -->
         <div class="row chart-row">
-            <div class="card chart-card md">
-                <h3>تحليل الأداء (مستفيدين / تحصيل / تحديثات)</h3>
-                <div id="chart-bubble-performance" class="chart-container"></div>
+            <div class="card chart-card lg">
+                <h3>أعلى 10 منافذ في إجمالي المستفيدين</h3>
+                <div id="chart-bar-top-beneficiaries" class="chart-container"></div>
             </div>
-            <div class="card chart-card md">
-                <h3>مساهمة المنافذ في إجمالي المستفيدين</h3>
-                <div id="chart-treemap-centers" class="chart-container"></div>
-            </div>
-            <div class="card chart-card sm">
-                <h3>مؤشر صحة التأمين (نسبة المؤمن عليه)</h3>
-                <div id="chart-gauge-health" class="chart-container"></div>
+            <div class="card chart-card lg">
+                <h3>أعلى 5 منافذ في إجمالي التحصيل</h3>
+                <div id="chart-bar-top-collections" class="chart-container"></div>
             </div>
         </div>
 
-        <!-- Row 4: Population Coverage -->
+        <!-- Row 4: Population Coverage & Health -->
         <div class="row chart-row">
             <div class="card chart-card lg">
                 <h3>مقارنة المسجلين وغير المسجلين حسب المنطقة</h3>
                 <div id="chart-stacked-coverage" class="chart-container"></div>
             </div>
-            <div class="card chart-card lg">
-                <h3>ترتيب المنافذ في نسبة التغطية السكانية</h3>
+            <div class="card chart-card md">
+                <h3>ترتيب المنافذ في نسبة التغطية السكانية (أعلى 20)</h3>
                 <div id="chart-bar-top-coverage" class="chart-container"></div>
+            </div>
+            <div class="card chart-card sm">
+                <h3>مؤشر صحة التأمين (نسبة المؤمن عليه)</h3>
+                <div id="chart-gauge-health" class="chart-container"></div>
             </div>
         </div>
 
@@ -186,6 +186,7 @@
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-locale-ar-latest.js"></script>
     <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     
     <script src="assets/charts.js"></script>
     <script src="assets/dashboard.js"></script>
